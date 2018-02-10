@@ -1,3 +1,6 @@
+.mode column
+.header on
+
 select
   w.week_id,
   min(d.activity_date) from_date,

@@ -167,20 +167,22 @@ def get_date_range():
     # strftime("%Y-%m-%d") or .isoformat()
     start_date = db_ops.get_last_activity_date()
     if start_date:
-        start_date += datetime.timedelta(days=1)
+        # start_date += datetime.timedelta(days=1)
+        None
     else:
         # getting almost all the data
         start_date = datetime.date(2017, 3, 1)
         start_date = start_date - datetime.timedelta(days=start_date.isocalendar()[2]-1)
 
-    end_date = datetime.date.today() - datetime.timedelta(days=1)
+    # end_date = datetime.date.today() - datetime.timedelta(days=1)
+    end_date = datetime.date.today()
     return (start_date, end_date)
 
 def fetch_data(start_date, end_date):
     url = "https://api.fitbit.com/1/user/-/activities/steps/date/<base-date>/<end-date>.json"
     url = url.replace("<base-date>", start_date)
     url = url.replace("<end-date>", end_date)
-    print url
+    # print url
 
     access_token = get_access_token()
     headers = {
@@ -188,7 +190,7 @@ def fetch_data(start_date, end_date):
     }
     resp = requests.get(url, headers=headers)
     # print resp.status_code
-    print json.dumps(json.loads(resp.text), indent = 2)
+    # print json.dumps(json.loads(resp.text), indent = 2)
     return json.loads(resp.text)
 
 def fetch_n_save_new_data():
