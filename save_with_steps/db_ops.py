@@ -151,8 +151,12 @@ def make_a_save(week_id = None, amount = None):
 
     # get the amount if week_id is specified
     if week_id:
-        cur.execute('select sum(save_amount) from daily_steps where week_id = ?', (week_id, ))
-        save_amount = round_up_save_amount(cur.fetchone()[0])
+        cur.execute('select sum(save_amount), max(activity_date) from daily_steps where week_id = ?', (week_id, ))
+        row = cur.fetchone()
+        save_amount = round_up_save_amount(row[0])
+        high_date = str_to_date(row[1])
+        if datetime.date.today() <= high_date:
+            return 0
     else:
         save_amount = amount or 0
 
@@ -262,13 +266,20 @@ def save_data(data):
 
 def get_save_amount(steps, slabs = None):
     # if slabs is None: slabs = [(5000, 0.01), (99999999, 0.25)]
-    if slabs is None: slabs = [(5000, 0.05), (99999999, 0.15)]
+    # if slabs is None: slabs = [20000, (5000, 0.05), (99999999, 0.15)]
+    if slabs is None:
+        slabs = [
+            25000,
+            (5000, 0.03),
+            (5000, 0.05),
+            (99999999, 0.15)
+        ]
 
-    high_val = 20000
+    high_val = slabs[0]
     esteps = max(high_val-steps, 0)
     save_amount = 0
 
-    for slab in slabs:
+    for slab in slabs[1:]:
         ratio = slab[1]
         slab_high = slab[0]
         save_amount += min(esteps, slab_high) * ratio
@@ -397,8 +408,18 @@ def get_summary(get_all = False):
         data.append(r)
     return data
 
+def test_save_amount():
+    print 'testing save amounts'
+    slabs = [25000, (5000, 0.03), (5000, 0.05), (99999999, 0.15)]
+    output_format = "{:>10}{:>10}{:>10}"
+    print output_format.format("Steps", "Day", "Week")
+    for i in range(5, 30):
+        a = i*1000
+        b = get_save_amount(a, slabs)
+        print output_format.format(a, b, b*7)
+
 if __name__ == "__main__":
-    None
+    test_save_amount()
     # create_schema()
     # print get_last_activity_date()
     # update_save_amomunt()

@@ -1,6 +1,7 @@
 from save_with_steps import db_ops
 from save_with_steps import fitbit
 import datetime
+import webbrowser
 
 def take_input(msg):
     print msg,
@@ -77,6 +78,9 @@ def make_a_save():
     week_id = str(take_input("Enter week id to save against:"))
     amount = db_ops.make_a_save(week_id)
     print "{:,} saved.".format(amount)
+    fund_url = "https://coin.zerodha.com/funds/14058050.002066"
+    if amount:
+        webbrowser.open(fund_url)
     return True
 
 def show_last_10():
@@ -206,7 +210,7 @@ main_options = [
     ("View Week Details", show_detail, ['d']),
     ("Make Save", make_a_save, ['s', 'save']),
     ("Fetch New Data", fetch_new_data, ['r']),
-    ("View Full Summary", show_full_summary, ['all']),
+    ("View Full Summary", show_full_summary, ['all', 'fs']),
     ("Quit", quit_program)
 ]
 
