@@ -78,7 +78,7 @@ def make_a_save():
     week_id = str(take_input("Enter week id to save against:"))
     amount = db_ops.make_a_save(week_id)
     print "{:,} saved.".format(amount)
-    fund_url = "https://coin.zerodha.com/funds/14058050.002066"
+    fund_url = "https://coin.zerodha.com/funds/14058050.002066?buy_window=true"
     if amount:
         webbrowser.open(fund_url)
     return True
