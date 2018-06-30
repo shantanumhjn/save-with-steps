@@ -74,7 +74,7 @@ def get_goals():
                 total_saved,
                 is_active
         from    goals
-        order   by goal_name
+        order   by goal_id
     '''
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
