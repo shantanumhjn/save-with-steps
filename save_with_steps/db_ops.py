@@ -100,7 +100,7 @@ def round_up_save_amount(amount):
 def disable_enable_goal(disable = True, goal_name = None, goal_id = None):
     goal = None
     disable_val = not(disable) and 1 or 0
-    print "Value of disable_val: {}".format(disable_val)
+    # print "Value of disable_val: {}".format(disable_val)
     if goal_name:
         sql = 'update goals set is_active = ? where goal_name = ?'
         goal = goal_name

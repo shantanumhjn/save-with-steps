@@ -84,7 +84,7 @@ def do_auth():
     server_proc.join()
 
 def is_access_code_valid(token):
-    url = "https://api.fitbit.com/oauth2/introspect"
+    url = "https://api.fitbit.com/1.1/oauth2/introspect"
     data = {
         "token": token
     }
@@ -92,8 +92,9 @@ def is_access_code_valid(token):
         "Authorization": "Bearer " + token
     }
     resp = requests.post(url, headers=headers, data=data)
+    # print resp.status_code
     # print resp.text
-    return json.loads(resp.text).get("active", 0) > 0
+    return json.loads(resp.text).get("active", False)
 
 def get_access_token():
     access_token = None
@@ -139,8 +140,11 @@ def get_new_access_token(refresh_token = None):
         data["refresh_token"] = refresh_token
         data["grant_type"] = "refresh_token"
     else:
-        if not os.path.isfile(authorization_file):
-            do_auth()
+        # if access token has already been retrieved,
+        # then same auth token cannot be used to get get another
+        # access token.
+        # auth has to be done again
+        do_auth()
         with open(authorization_file) as f:
             auth_code = f.read()
 
@@ -213,6 +217,7 @@ def fetch_n_save_new_data():
 if __name__ == "__main__":
     freeze_support() # needed for windows
 
-    print get_date_range()
+    # print get_date_range()
+    print get_access_token()
     # fetch_n_save_new_data()
     # fetch_data(datetime.date(2018, 1, 20).isoformat(), datetime.date(2018, 1, 25).isoformat())
