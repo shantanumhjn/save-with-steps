@@ -51,7 +51,59 @@ def create_schema():
     '''
     cur.execute(sql)
 
+    # goal_logs table
+    sql = """
+        create table if not exists goal_logs (
+            date        date default (datetime('now', 'localtime')),
+            goal_name   text,
+            operation   text,
+            old_saved   int,
+            old_target  int,
+            new_saved   int,
+            new_target  int,
+            comment     text
+        )
+    """
+    cur.execute(sql)
+
+    sql = 'create index if not exists goal_logs_idx1 on goal_logs (goal_name, operation)'
+    cur.execute(sql)
+
+
     conn.close()
+
+def log_goal_change(goal_name, operation, old_saved = 0, old_target = 0, new_saved = 0, new_target = 0, comment = None):
+    conn = sqlite3.connect(db_file)
+    sql = '''
+        insert into goal_logs (
+            goal_name, operation, old_saved, old_target, new_saved, new_target, comment
+        ) values (
+            ?, ?, ?, ?, ?, ?, ?
+        )
+    '''
+    conn.execute(sql, (goal_name, operation, old_saved, old_target, new_saved, new_target, comment))
+    conn.commit()
+    conn.close()
+
+def get_goal_info(goal_name = None, goal_id = None):
+    sql = '''
+        select  goal_id, goal_name, goal_amount, total_saved, is_active
+        from    goals
+        where   goal_id = ?
+        or      goal_name = ?
+    '''
+    goal = {}
+    conn = sqlite3.connect(db_file)
+    r = conn.execute(sql, (goal_id, goal_name)).fetchone()
+    conn.close()
+    if r is not None:
+        goal["id"] = r[0]
+        goal["name"] = r[1]
+        goal["target"] = r[2]
+        goal["saved"] = r[3]
+        goal["is_acitve"] = r[4]
+
+    return goal
 
 def add_goal(goal_name, goal_amount = 0):
     conn = sqlite3.connect(db_file)
@@ -65,6 +117,12 @@ def add_goal(goal_name, goal_amount = 0):
 
     conn.commit()
     conn.close()
+
+    log_goal_change(
+        goal_name = goal_name,
+        operation = 'add_goal',
+        new_target = goal_amount
+    )
 
 def get_goals():
     sql = '''
@@ -98,52 +156,81 @@ def round_up_save_amount(amount):
     return int(round(amount, -2))
 
 def disable_enable_goal(disable = True, goal_name = None, goal_id = None):
-    goal = None
+    goal = get_goal_info(goal_name = goal_name, goal_id = goal_id)
+    if not goal.get("id", None): return
+
     disable_val = not(disable) and 1 or 0
-    # print "Value of disable_val: {}".format(disable_val)
-    if goal_name:
-        sql = 'update goals set is_active = ? where goal_name = ?'
-        goal = goal_name
-    else:
-        sql = 'update goals set is_active = ? where goal_id = ?'
-        goal = goal_id
+    sql = 'update goals set is_active = ? where goal_id = ?'
 
     conn = sqlite3.connect(db_file)
-    cur = conn.cursor()
-    cur.execute(sql, (disable_val, goal))
+    conn.execute(sql, (disable_val, goal_id))
     conn.commit()
     conn.close()
 
+    log_goal_change(
+        goal_name = goal["name"],
+        operation = "disable_goal" if disable else "enable_goal",
+        old_saved = goal["saved"],
+        old_target = goal["target"],
+        new_saved = goal["saved"],
+        new_target = goal["target"]
+    )
 
 def update_goal_target(amount, goal_name = None, goal_id = None):
-    goal = None
-    if goal_name:
-        sql = 'update goals set goal_amount = ? where goal_name = ?'
-        goal = goal_name
-    else:
-        sql = 'update goals set goal_amount = ? where goal_id = ?'
-        goal = goal_id
+    goal = get_goal_info(goal_name, goal_id)
+    if not goal.get("id", None): return
+
+    sql = 'update goals set goal_amount = ? where goal_id = ?'
 
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    cur.execute(sql, (amount, goal))
+    cur.execute(sql, (amount, goal['id']))
     conn.commit()
     conn.close()
 
-def add_funds_to_goal(amount, goal_name = None, goal_id = None):
-    goal = None
-    if goal_name:
-        sql = 'update goals set total_saved = total_saved + ? where goal_name = ?'
-        goal = goal_name
-    else:
-        sql = 'update goals set total_saved = total_saved + ? where goal_id = ?'
-        goal = goal_id
+    log_goal_change(
+        goal_name = goal['name'],
+        operation = 'update_target',
+        old_saved = goal['saved'],
+        old_target = goal['target'],
+        new_saved = goal['saved'],
+        new_target = amount
+    )
+
+def add_funds_to_goal(amount, goal_name = None, goal_id = None, from_save = False, comment = None):
+    goal = get_goal_info(goal_name, goal_id)
+
+    # if invalid input, return
+    if not goal.get("id", None): return
+
+    goal_id = goal["id"]
+    old_saved = goal["saved"]
+    target = goal["target"]
+    new_saved = old_saved + amount
+
+    sql = 'update goals set total_saved = ? where goal_id = ?'
 
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    cur.execute(sql, (amount, goal))
+    cur.execute(sql, (new_saved, goal_id))
     conn.commit()
     conn.close()
+
+    operation = 'add_funds'
+    if from_save:
+        operation = 'save'
+    elif new_saved < old_saved:
+        operation = 'remove_funds'
+
+    log_goal_change(
+        goal_name = goal["name"],
+        operation = operation,
+        old_saved = old_saved,
+        old_target = target,
+        new_saved = new_saved,
+        new_target = target,
+        comment = comment
+    )
 
 def make_a_save(week_id = None, amount = None):
     conn = sqlite3.connect(db_file)
@@ -164,51 +251,52 @@ def make_a_save(week_id = None, amount = None):
     cur.execute('select goal_id, total_saved from goals where is_active = 1')
     goals = cur.fetchall()
     num_goals = len(goals)
+    conn.close()
 
     # divide the amount amongst the goals
     if num_goals > 0:
         save_per_goal = save_amount/num_goals
         for i in range(num_goals):
-            this_save = goals[i][1]
+            this_save = 0
             this_save += save_per_goal
             if (i+1) <= (save_amount - (save_per_goal*num_goals)):
                 this_save += 1
-            goals[i] = (this_save, goals[i][0])
-
-        cur.executemany('update goals set total_saved = ? where goal_id = ?', goals)
-        conn.commit()
+            add_funds_to_goal(
+                amount = this_save,
+                goal_id = goals[i][0],
+                from_save = True,
+                comment = "week_id: {}".format(week_id) if week_id else 'from delete'
+            )
 
     # mark as saved if week_id is specified
     if week_id:
-        cur.execute('update weekly_steps set action_taken = 1 where week_id = ?', (week_id, ))
+        conn = sqlite3.connect(db_file)
+        conn.execute('update weekly_steps set action_taken = 1 where week_id = ?', (week_id, ))
         conn.commit()
 
-    conn.close()
     return save_amount
 
 def delete_goal(goal_name = None, goal_id = None, redistribute = True):
+    goal = get_goal_info(goal_name = goal_name, goal_id = goal_id)
+    if not goal.get("id", None): return
+
+    saved = goal["saved"]
+
     conn = sqlite3.connect(db_file)
-    cur = conn.cursor()
-    amount = 0
-
-    goal = goal_name
-    if goal_name:
-        sql1 = 'select sum(total_saved) from goals where goal_name = ?'
-        sql2 = 'delete from goals where goal_name = ?'
-    else:
-        sql1 = 'select sum(total_saved) from goals where goal_id = ?'
-        sql2 = 'delete from goals where goal_id = ?'
-        goal = goal_id
-
-    if redistribute:
-        cur.execute(sql1, (goal, ))
-        amount = cur.fetchone()[0] or 0
-
-    cur.execute(sql2, (goal, ))
+    conn.execute('delete from goals where goal_id = ?', (goal["id"], ))
     conn.commit()
+    conn.close()
+
+    log_goal_change(
+        goal_name = goal['name'],
+        operation = 'delete',
+        old_saved = goal['saved'],
+        old_target = goal['target'],
+        comment = "Redistribute: {}".format(redistribute)
+    )
 
     # now redistribute
-    if amount: make_a_save(amount=amount)
+    if redistribute: make_a_save(amount = saved)
 
 def get_last_activity_date():
     sql = """
