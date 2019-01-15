@@ -358,8 +358,8 @@ def get_save_amount(steps, slabs = None):
     if slabs is None:
         slabs = [
             25000,
-            (5000, 0.03),
-            (5000, 0.05),
+            (5000, 0.035),
+            (5000, 0.06),
             (99999999, 0.15)
         ]
 
@@ -496,15 +496,38 @@ def get_summary(get_all = False):
         data.append(r)
     return data
 
+def print_data(data, headers_to_print = None):
+    if headers_to_print:
+        headers = headers_to_print
+    else:
+        headers = set()
+        for row in data:
+            headers = headers | set(row.keys())
+
+    headers = [[header, len(header)] for header in headers]
+
+    for row in data:
+        for header in headers:
+            header[1] = max(header[1], len(str(row.get(header[0], ''))))
+
+    print_format = (u'{{:>{}}}' * len(headers)).format(*[h[1]+2 for h in headers])
+    print print_format.format(*[h[0] for h in headers])
+    print print_format.format(*['-'*len(h[0]) for h in headers])
+    for row in data:
+        print print_format.format(*[row.get(h[0], '') for h in headers])
+
 def test_save_amount():
+    slabs = [25000, (5000, 0.035), (5000, 0.06), (99999999, 0.15)]
     print 'testing save amounts'
-    slabs = [25000, (5000, 0.03), (5000, 0.05), (99999999, 0.15)]
-    output_format = "{:>10}{:>10}{:>10}"
-    print output_format.format("Steps", "Day", "Week")
-    for i in range(5, 30):
-        a = i*1000
-        b = get_save_amount(a, slabs)
-        print output_format.format(a, b, b*7)
+    data = get_summary(get_all=True)
+    data = data[-10:]
+    for row in data:
+        new_save = 0
+        details = get_details(week_id=row['week_id'])
+        for det_row in details:
+            new_save += get_save_amount(det_row['steps'], slabs)
+        row['new_save'] = round_up_save_amount(new_save)
+    print_data(data, headers_to_print=['week_id', 'save_amount', 'new_save'])
 
 if __name__ == "__main__":
     test_save_amount()
