@@ -358,8 +358,8 @@ def get_save_amount(steps, slabs = None):
     if slabs is None:
         slabs = [
             25000,
-            (5000, 0.035),
-            (5000, 0.06),
+            (5000, 0.05),
+            (5000, 0.08),
             (99999999, 0.15)
         ]
 
@@ -517,7 +517,7 @@ def print_data(data, headers_to_print = None):
         print print_format.format(*[row.get(h[0], '') for h in headers])
 
 def test_save_amount():
-    slabs = [25000, (5000, 0.035), (5000, 0.06), (99999999, 0.15)]
+    slabs = [25000, (5000, 0.05), (5000, 0.08), (99999999, 0.15)]
     print 'testing save amounts'
     data = get_summary(get_all=True)
     data = data[-10:]
