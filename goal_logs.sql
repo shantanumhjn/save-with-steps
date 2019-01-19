@@ -13,7 +13,6 @@ select  l.date,
         -- l.old_target,
         l.comment
 from    goal_logs l
--- where   l.goal_id = ?
 order   by l.date desc
 limit   15
 ;
