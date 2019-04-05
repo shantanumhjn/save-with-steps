@@ -132,20 +132,22 @@ def delete_goal():
 def remove_funds():
     (goal_name, goal_id) = take_goal_input("Enter goal name (or id) to remove funds from:")
     amount = int(take_input("Enter amount:"))
+    comment = take_input("Comment:")
     out_str = "{:,} removed from {}".format(amount, goal_name)
     if goal_id:
         out_str = "{:,} removed from ({})".format(amount, goal_id)
-    db_ops.add_funds_to_goal(-amount, goal_name, goal_id)
+    db_ops.add_funds_to_goal(-amount, goal_name, goal_id, comment=comment)
     print out_str
     return True
 
 def add_funds():
     (goal_name, goal_id) = take_goal_input("Enter goal name (or id) to add funds to:")
     amount = int(take_input("Enter amount:"))
+    comment = take_input("Comment:")
     out_str = "{:,} added to {}".format(amount, goal_name)
     if goal_id:
         out_str = "{:,} added to ({})".format(amount, goal_id)
-    db_ops.add_funds_to_goal(amount, goal_name, goal_id)
+    db_ops.add_funds_to_goal(amount, goal_name, goal_id, comment=comment)
     print out_str
     return True
 
