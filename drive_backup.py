@@ -16,6 +16,9 @@ from optparse import OptionParser
 client_secret_file = "google_client_secret.json"
 credentials_file = "google_creds.json"
 
+file_to_upload = "fitbit_data.db"
+file_to_download = "fitbit_data_temp.db"
+
 def get_service():
     # Setup the Drive v3 API
     SCOPES = 'https://www.googleapis.com/auth/drive'
@@ -33,7 +36,7 @@ def get_service():
 def get_file_id(service = None, print_files = False):
     if service is None: service = get_service()
     results = service.files().list(
-        q="name='fitbit_data.db'",
+        q="name='" + file_to_upload + "'",
         orderBy="modifiedTime",
         pageSize=10,
         fields="nextPageToken, files(id, name, version, mimeType, modifiedTime)"
@@ -67,7 +70,7 @@ def download_file():
         status, done = downloader.next_chunk()
         print("Downloaded {}%.".format(int(status.progress() * 100)))
 
-    with open("fitbit_data_temp.db", 'wb') as f:
+    with open(file_to_download, 'wb') as f:
         f.write(fh.getvalue())
 
     fh.close()
@@ -76,7 +79,7 @@ def upload_file():
     service = get_service()
     file_id = get_file_id(service)
     file_content = None
-    with open("fitbit_data.db", 'rb') as f:
+    with open(file_to_upload, 'rb') as f:
         file_content = f.read()
 
     fh = io.BytesIO(file_content)
