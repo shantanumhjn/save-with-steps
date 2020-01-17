@@ -64,7 +64,7 @@ def download_file():
         status, done = downloader.next_chunk()
         print("Downloaded {}%.".format(int(status.progress() * 100)))
 
-    with open("fitbit_data_temp.db", 'w') as f:
+    with open("fitbit_data_temp.db", 'wb') as f:
         f.write(fh.getvalue())
 
     fh.close()

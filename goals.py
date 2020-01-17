@@ -61,8 +61,8 @@ def print_goal_logs(goal_names):
                     or      lower(goal_name) like ?
                 '''
             query_data += ('%{}%'.format(goal_name.lower()), )
-    else:
-        limit_clause_replacement = 'limit 15'
+    # else:
+    #     limit_clause_replacement = 'limit 15'
 
     sql = sql.replace('<where clause>', where_clause_replacement)
     sql = sql.replace('<limit clause>', limit_clause_replacement)
@@ -71,8 +71,15 @@ def print_goal_logs(goal_names):
         con.row_factory = sqlite3.Row
         data = con.execute(sql, query_data).fetchall()
 
+    # need to get summary here because the print routine
+    # formats the data
+    goal_summary = get_goal_summary(data)
+    if not goal_names:
+        mytabprint.print_data(goal_summary.viewvalues(), ['goal', 'credits', 'debits', 'diff'])
+        print
+
     to_print = []
-    for row in data:
+    for i, row in enumerate(data[-15:]):
         to_print.append({
             'date': row['date'],
             'goal_name': row['goal_name'],
@@ -86,6 +93,25 @@ def print_goal_logs(goal_names):
 
     headers = ['date', 'goal_name', 'operation', 'save_change', 'final_saved', 'target_change', 'final_target', 'comment']
     mytabprint.print_data(to_print, headers)
+
+    if goal_names:
+        print
+        mytabprint.print_data(goal_summary.viewvalues(), ['goal', 'credits', 'debits', 'diff'])
+
+def get_goal_summary(data):
+    goal_wise_data = {}
+    for row in data:
+        _ = goal_wise_data.setdefault(row['goal_name'], {'credits': 0, 'debits': 0, 'goal': row['goal_name']})
+        change = int(row['save_change'])
+        if change > 0:
+            key = 'credits'
+        else:
+            key = 'debits'
+            change = change * -1
+        _[key] += change
+        _['diff'] = _['credits'] - _['debits']
+
+    return goal_wise_data
 
 if __name__ == "__main__":
     print_goals(sys.argv[1:])
