@@ -13,13 +13,16 @@ from apiclient.http import MediaIoBaseUpload
 import io
 from optparse import OptionParser
 
+client_secret_file = "google_client_secret.json"
+credentials_file = "google_creds.json"
+
 def get_service():
     # Setup the Drive v3 API
     SCOPES = 'https://www.googleapis.com/auth/drive'
     store = file.Storage('credentials.json')
     creds = store.get()
     if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets('client_secret.json', SCOPES)
+        flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
         creds = tools.run_flow(flow, store)
     service = build('drive', 'v3', http=creds.authorize(Http()))
     return service

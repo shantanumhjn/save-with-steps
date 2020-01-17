@@ -1,5 +1,5 @@
 **/*.json
 **/*.pyc
 **/*.db
-auth_file
+fitbit_auth_file
 scratch

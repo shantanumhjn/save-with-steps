@@ -27,8 +27,8 @@ The Flow:
 
 secrets_dir = "."
 secret_file = os.path.join(secrets_dir, "fitbit_secret.json")
-authorization_file = os.path.join(secrets_dir, "auth_file")
-access_token_file = os.path.join(secrets_dir, "access_file.json")
+authorization_file = os.path.join(secrets_dir, "fitbit_auth_file")
+access_token_file = os.path.join(secrets_dir, "fitbit_access_file.json")
 secrets = {}
 
 def load_secrets():
