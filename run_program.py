@@ -1,7 +1,8 @@
 from save_with_steps import db_ops
 from save_with_steps import fitbit
 import datetime
-import webbrowser
+# import webbrowser
+from save_with_steps import errors
 
 def take_input(msg):
     print msg,
@@ -54,12 +55,12 @@ def show_goals(wait = False):
     print
     print "Showing Goals"
     data = db_ops.get_goals()
-    output_format = "{:25}{:>20}  {}"
-    print_header(output_format, ["Goal Name", "Amount Saved", "Active"])
+    output_format = "{:25}{:>20}  {:<6} {:>12}"
+    print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Percentage"])
     for r in data:
         goal_name = "{} ({})".format(r["goal_name"], r["goal_id"])
         amount = (lambda x, y: "{:,}".format(y) if x <= 0 else "{:,}".format(y)+"/"+"{:,}".format(x))(r["goal_amount"], r["amount_saved"])
-        print output_format.format(goal_name, amount, r["active"])
+        print output_format.format(goal_name, amount, r["active"], r["percentage"])
     return wait
 
 def add_goal():
@@ -76,11 +77,18 @@ def fetch_new_data():
 
 def make_a_save():
     week_id = str(take_input("Enter week id to save against:"))
-    amount = db_ops.make_a_save(week_id)
-    print "{:,} saved.".format(amount)
-    fund_url = "https://coin.zerodha.com/funds/14058050.002066?buy_window=true"
-    if amount:
-        webbrowser.open(fund_url)
+    try:
+        saved_for_each_goal = db_ops.make_a_save(week_id)
+        total_saved = 0
+        for goal in saved_for_each_goal:
+            print "{:,} saved in goal {}.".format(goal[2], goal[1])
+            total_saved += goal[2]
+        print("Total saved: {}".format(total_saved))
+    except errors.InvalidPercentages as errMsg:
+        print("unable to make a save because: {}".format(errMsg))
+    # fund_url = "https://coin.zerodha.com/funds/14058050.002066?buy_window=true"
+    # if amount:
+    #     webbrowser.open(fund_url)
     return True
 
 def show_last_10():

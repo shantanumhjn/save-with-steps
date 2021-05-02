@@ -1,6 +1,7 @@
 import sqlite3
 import datetime
 import json
+from errors import InvalidPercentages
 
 db_file = "fitbit_data.db"
 
@@ -50,6 +51,14 @@ def create_schema():
         )
     '''
     cur.execute(sql)
+
+    sql = '''
+        alter table goals add column percentage number default 0
+    '''
+    try:
+        cur.execute(sql)
+    except Exception as error:
+        print("Error while adding percentage column to goals: {}".format(error))
 
     # goal_logs table
     sql = """
@@ -130,7 +139,8 @@ def get_goals():
                 goal_name,
                 goal_amount,
                 total_saved,
-                is_active
+                is_active,
+                percentage
         from    goals
         order   by goal_id
     '''
@@ -147,7 +157,8 @@ def get_goals():
             "goal_name": str(r[1]),
             "goal_amount": int(r[2]),
             "amount_saved": int(r[3]),
-            "active": (lambda x: "yes" if x == 1 else "no")(int(r[4]))
+            "active": (lambda x: "yes" if x == 1 else "no")(int(r[4])),
+            "percentage": float(r[5])
         }
         data.append(row)
     return data
@@ -248,25 +259,43 @@ def make_a_save(week_id = None, amount = None):
         save_amount = amount or 0
 
     # get goals
-    cur.execute('select goal_id, total_saved from goals where is_active = 1')
+    cur.execute('select goal_id, total_saved, percentage, goal_name from goals where is_active = 1')
     goals = cur.fetchall()
     num_goals = len(goals)
     conn.close()
 
+    # check the percentages
+    total_precentage = 0
+    for goal in goals:
+        total_precentage += goal[2]
+        # print("percentage for goal_id {} is {}".format(goal[0], goal[2]))
+    # print("total percentage: {}".format(total_precentage))
+    if total_precentage != 100 and total_precentage != 0:
+        raise InvalidPercentages("the percentages for all active goals sum up to {}, instead of 100".format(total_precentage))
+
+    default_percentage = 0
+    if total_precentage == 0:
+        default_percentage = 100.0 / num_goals
+
     # divide the amount amongst the goals
+    saved_for_each_goal = []
     if num_goals > 0:
-        save_per_goal = save_amount/num_goals
-        for i in range(num_goals):
-            this_save = 0
-            this_save += save_per_goal
-            if (i+1) <= (save_amount - (save_per_goal*num_goals)):
-                this_save += 1
-            add_funds_to_goal(
-                amount = this_save,
-                goal_id = goals[i][0],
-                from_save = True,
-                comment = "week_id: {}".format(week_id) if week_id else 'from delete'
-            )
+        total_saved = 0
+        for goal in goals:
+            this_save = save_amount * ((default_percentage or goal[2]) / 100.0)
+            this_save = int(this_save)
+            if this_save:
+                total_saved += this_save
+                saved_for_each_goal.append((goal[0], goal[3], this_save))
+        saved_for_each_goal[0] = (saved_for_each_goal[0][0], saved_for_each_goal[0][1], saved_for_each_goal[0][2] + (save_amount - total_saved))
+
+    for each_goal in saved_for_each_goal:
+        add_funds_to_goal(
+            amount = each_goal[2],
+            goal_id = each_goal[0],
+            from_save = True,
+            comment = "week_id: {}".format(week_id) if week_id else 'from delete'
+        )
 
     # mark as saved if week_id is specified
     if week_id:
@@ -274,7 +303,7 @@ def make_a_save(week_id = None, amount = None):
         conn.execute('update weekly_steps set action_taken = 1 where week_id = ?', (week_id, ))
         conn.commit()
 
-    return save_amount
+    return saved_for_each_goal
 
 def delete_goal(goal_name = None, goal_id = None, redistribute = True):
     goal = get_goal_info(goal_name = goal_name, goal_id = goal_id)
