@@ -186,6 +186,16 @@ def disable_goal():
 def enable_goal():
     return disable_enable_goal(False)
 
+def plot_graph():
+    (goal_name, goal_id) = take_goal_input("Enter goal name (or id)")
+    goal_logs = db_ops.get_goal_logs(goal_name=goal_name, goal_id=goal_id)
+    if goal_logs is None:
+        print "No data found."
+        return
+
+    from save_with_steps import plotting
+    plotting.plot_goal_log(goal_logs)
+
 def print_goal_options():
     show_goals()
     print
@@ -235,6 +245,7 @@ goal_options = [
     ("Take out Funds from Goal", remove_funds),
     ("Disable Goal", disable_goal),
     ("Enable Goal", enable_goal),
+    ("Plot Graph", plot_graph, ['p']),
     ("Quit", quit_program)
 ]
 goal_options_dict = create_options_dict(goal_options)

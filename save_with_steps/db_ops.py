@@ -114,6 +114,36 @@ def get_goal_info(goal_name = None, goal_id = None):
 
     return goal
 
+def get_goal_logs(goal_name = None, goal_id = None):
+    goal = get_goal_info(goal_name = goal_name, goal_id = goal_id)
+
+    if goal is None or goal.get("name") is None:
+        return
+
+    sql = '''
+        select  goal_name, date, new_saved, new_target, comment
+        from    goal_logs
+        where   goal_name = ?
+    '''
+    conn = sqlite3.connect(db_file)
+    rs = conn.execute(sql, [goal["name"]]).fetchall()
+    conn.close()
+
+    return_data = None
+    if rs is not None and len(rs) > 0:
+        return_data = {}
+        for row in rs:
+            goal_name = row[0]
+            log_entry = {
+                "date": row[1],
+                "new_saved": row[2],
+                "new_target": row[3],
+                "comment": row[4]
+            }
+            return_data.setdefault(goal_name, []).append(log_entry)
+    return return_data
+
+
 def add_goal(goal_name, goal_amount = 0):
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
