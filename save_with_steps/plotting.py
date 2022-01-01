@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 import dateutil.parser as dateparser
+import numpy as np
 
 '''
     # need to convert the date strings into date
@@ -65,7 +66,16 @@ def plot_goal_log(goals_with_logs):
     plt.grid(True)
 
     for goal_name, data in fixed_data.items():
-        plt.plot(data[0], data[1], label=goal_name)
+        dates = data[0]
+        data_points = data[1]
+        plt.plot(dates, data_points, label=goal_name)
+
+        # plotting a trend line
+        X = mdates.date2num(dates)
+        z = np.polyfit(X, data_points, 2)
+        p = np.poly1d(z)
+        plt.plot(X, p(X), 'r--')
+
     plt.legend()
 
     plt.show()
