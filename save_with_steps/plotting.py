@@ -72,9 +72,10 @@ def plot_goal_log(goals_with_logs):
 
         # plotting a trend line
         X = mdates.date2num(dates)
-        z = np.polyfit(X, data_points, 2)
+        z = np.polyfit(X, data_points, 1)
         p = np.poly1d(z)
-        plt.plot(X, p(X), 'r--')
+        # print(p)
+        plt.plot(X, p(X), 'r--', label=str(p))
 
     plt.legend()
 
