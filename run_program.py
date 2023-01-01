@@ -5,8 +5,8 @@ import datetime
 from save_with_steps import errors
 
 def take_input(msg):
-    print msg,
-    inp = str(raw_input())
+    print(msg, end=' ')
+    inp = str(input())
     # print "input provided:", inp, "of type:", type(inp)
     return inp
 
@@ -21,58 +21,58 @@ def wait_after_output(wait = None):
         if keep_running: take_input("Press enter to continue...")
 
 def invalid_input():
-    print
-    print "invalid input"
+    print()
+    print("invalid input")
     return True
 
 def none():
-    print
-    print "i do nothing yet"
+    print()
+    print("i do nothing yet")
     return True
 
 def print_header(output_format, header_cols):
     output_format = output_format.replace(',', '')
-    print output_format.format(*header_cols)
-    print output_format.format(*['-'*len(header) for header in header_cols])
+    print(output_format.format(*header_cols))
+    print(output_format.format(*['-'*len(header) for header in header_cols]))
 
 def show_summary(show_all = False):
-    print
-    print "showing summary"
+    print()
+    print("showing summary")
     data = db_ops.get_summary(show_all)
     output_format = "{:10}{:12}{:12}{:>6}{:>10,}{:>10,}{:>10,}"
     print_header(output_format, ["Week ID", "From Date", "To Date", "Days", "Steps", "Average", "Save"])
     for r in data:
-        print output_format.format(
+        print(output_format.format(
         r["week_id"], r["from_date"], r["to_date"],
         r["num_days"], r["total_steps"], r["avg_steps"], r["save_amount"]
-        )
+        ))
     return True
 
 def show_full_summary():
     return show_summary(True)
 
 def show_goals(wait = False):
-    print
-    print "Showing Goals"
+    print()
+    print("Showing Goals")
     data = db_ops.get_goals()
     output_format = "{:25}{:>20}  {:<6} {:>12}"
     print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Percentage"])
     for r in data:
         goal_name = "{} ({})".format(r["goal_name"], r["goal_id"])
         amount = (lambda x, y: "{:,}".format(y) if x <= 0 else "{:,}".format(y)+"/"+"{:,}".format(x))(r["goal_amount"], r["amount_saved"])
-        print output_format.format(goal_name, amount, r["active"], r["percentage"])
+        print(output_format.format(goal_name, amount, r["active"], r["percentage"]))
     return wait
 
 def add_goal():
     goal_name = str(take_input("goal name:"))
     goal_amount = int((lambda x: x if x.isdigit() else '0')(take_input("goal amount (0 for unknown):")))
     db_ops.add_goal(goal_name, goal_amount)
-    print "created a goal named '{}' with a target of {:d}".format(goal_name, goal_amount)
+    print("created a goal named '{}' with a target of {:d}".format(goal_name, goal_amount))
 
 def fetch_new_data():
-    print
+    print()
     fitbit.fetch_n_save_new_data()
-    print "Data fetched successfully."
+    print("Data fetched successfully.")
     return True
 
 def make_a_save():
@@ -81,7 +81,7 @@ def make_a_save():
         saved_for_each_goal = db_ops.make_a_save(week_id)
         total_saved = 0
         for goal in saved_for_each_goal:
-            print "{:,} saved in goal {}.".format(goal[2], goal[1])
+            print("{:,} saved in goal {}.".format(goal[2], goal[1]))
             total_saved += goal[2]
         print("Total saved: {}".format(total_saved))
     except errors.InvalidPercentages as errMsg:
@@ -107,8 +107,8 @@ def show_detail(use_week_id = True):
         end_date = datetime.date.today().isoformat()
         msg = "Showing Details from {} to {}".format(begin_date, end_date)
 
-    print
-    print msg
+    print()
+    print(msg)
 
     data = db_ops.get_details(week_id = week_id, begin_date = begin_date, end_date = end_date)
 
@@ -116,7 +116,7 @@ def show_detail(use_week_id = True):
     headers = ["Activity Date", "Steps Taken", "Save Amount"]
     print_header(output_format, headers)
     for r in data:
-        print output_format.format(r["date"].strftime("%a - %b %d, %y"), r["steps"], r["save_amount"])
+        print(output_format.format(r["date"].strftime("%a - %b %d, %y"), r["steps"], r["save_amount"]))
     return True
 
 def take_goal_input(prompt):
@@ -134,7 +134,7 @@ def delete_goal():
     out_str = "{} deleted.".format(goal_name)
     if goal_id:
         out_str = "({}) deleted.".format(goal_id)
-    print out_str
+    print(out_str)
     return True
 
 def remove_funds():
@@ -145,7 +145,7 @@ def remove_funds():
     if goal_id:
         out_str = "{:,} removed from ({})".format(amount, goal_id)
     db_ops.add_funds_to_goal(-amount, goal_name, goal_id, comment=comment)
-    print out_str
+    print(out_str)
     return True
 
 def add_funds():
@@ -156,7 +156,7 @@ def add_funds():
     if goal_id:
         out_str = "{:,} added to ({})".format(amount, goal_id)
     db_ops.add_funds_to_goal(amount, goal_name, goal_id, comment=comment)
-    print out_str
+    print(out_str)
     return True
 
 def update_goal_target():
@@ -166,7 +166,7 @@ def update_goal_target():
     if goal_id:
         out_str = "Updated target for ({}) to {:,}".format(goal_id, amount)
     db_ops.update_goal_target(amount, goal_name, goal_id)
-    print out_str
+    print(out_str)
     return True
 
 def disable_enable_goal(disable = True):
@@ -177,7 +177,7 @@ def disable_enable_goal(disable = True):
     if goal_id:
         out_str = "Goal ({}) {}.".format(goal_id, disable_str)
     db_ops.disable_enable_goal(disable, goal_name, goal_id)
-    print out_str
+    print(out_str)
     return True
 
 def disable_goal():
@@ -190,7 +190,7 @@ def plot_graph():
     (goal_name, goal_id) = take_goal_input("Enter goal name (or id)")
     goal_logs = db_ops.get_goal_logs(goal_name=goal_name, goal_id=goal_id)
     if goal_logs is None:
-        print "No data found."
+        print("No data found.")
         return
 
     from save_with_steps import plotting
@@ -198,11 +198,11 @@ def plot_graph():
 
 def print_goal_options():
     show_goals()
-    print
-    print "Manage Goals, quit to go back"
-    print
+    print()
+    print("Manage Goals, quit to go back")
+    print()
     for i in range(len(goal_options)):
-        print "{}) {}".format((i+1), goal_options[i][0])
+        print("{}) {}".format((i+1), goal_options[i][0]))
 
 def run_goal_program():
     global keep_running
@@ -251,10 +251,10 @@ goal_options = [
 goal_options_dict = create_options_dict(goal_options)
 
 def print_main_options():
-    print
-    print "Main Program:"
+    print()
+    print("Main Program:")
     for i in range(len(main_options)):
-        print "{}) {}".format((i+1), main_options[i][0])
+        print("{}) {}".format((i+1), main_options[i][0]))
 
 def main():
     global keep_running

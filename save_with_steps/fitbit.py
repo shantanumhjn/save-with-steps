@@ -1,13 +1,12 @@
-from urllib import urlencode
-from urlparse import urlparse
-import BaseHTTPServer
+from urllib.parse import urlencode, urlparse
+from http.server import BaseHTTPRequestHandler,HTTPServer
 from multiprocessing import Process, freeze_support
 import webbrowser
 import requests
 import json
 import os
 import datetime
-import db_ops
+from . import db_ops
 
 '''
 The Flow:
@@ -48,7 +47,7 @@ def parse_n_save_auth_code(url_path):
         f.write(auth_code)
 
 def start_server():
-    class MyHTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    class MyHTTPRequestHandler(BaseHTTPRequestHandler):
         def do_GET(self):
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
@@ -58,7 +57,7 @@ def start_server():
             self.wfile.flush()
 
     server_address = ('', 8080)
-    httpd = BaseHTTPServer.HTTPServer(server_address, MyHTTPRequestHandler)
+    httpd = HTTPServer(server_address, MyHTTPRequestHandler)
     httpd.handle_request()
 
 def start_server_wrapper():
@@ -99,17 +98,17 @@ def is_access_code_valid(token):
 def get_access_token():
     access_token = None
     if not os.path.isfile(access_token_file):
-        print "getting new access token"
+        print("getting new access token")
         access_token = get_new_access_token()
     else:
         with open(access_token_file) as f:
             tk = json.loads(f.read())
         access_token = tk["access_token"]
         if not is_access_code_valid(access_token):
-            print "have to refresh access token"
+            print("have to refresh access token")
             access_token = refresh_access_token(tk["refresh_token"])
         else:
-            print "using access token from file"
+            print("using access token from file")
     return access_token
 
 def del_file(filename):
@@ -160,11 +159,11 @@ def get_new_access_token(refresh_token = None):
             f.write(json.dumps(resp_json, indent = 2))
         return resp_json["access_token"]
     else:
-        print "error getting access token"
-        print "error code:", status_code
-        print json.dumps(resp_json["errors"], indent = 2)
+        print("error getting access token")
+        print("error code:", status_code)
+        print(json.dumps(resp_json["errors"], indent = 2))
         del_files()
-        print "try again"
+        print("try again")
         return None
 
 def get_date_range():
@@ -205,9 +204,9 @@ def fetch_n_save_new_data():
 
     # there has to be at least 1 days time difference
     if end_date - start_date >= datetime.timedelta(days=0):
-        print "fetching date from {} to {}".format(start_date_str, end_date_str)
+        print("fetching date from {} to {}".format(start_date_str, end_date_str))
     else:
-        print "found invalid date range: {} to {}".format(start_date_str, end_date_str)
+        print("found invalid date range: {} to {}".format(start_date_str, end_date_str))
         return
 
     # print start_date, end_date
@@ -218,6 +217,6 @@ if __name__ == "__main__":
     freeze_support() # needed for windows
 
     # print get_date_range()
-    print get_access_token()
+    print(get_access_token())
     # fetch_n_save_new_data()
     # fetch_data(datetime.date(2018, 1, 20).isoformat(), datetime.date(2018, 1, 25).isoformat())

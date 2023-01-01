@@ -1,7 +1,7 @@
 import sqlite3
 import datetime
 import json
-from errors import InvalidPercentages
+from . import errors
 
 db_file = "fitbit_data.db"
 
@@ -301,7 +301,7 @@ def make_a_save(week_id = None, amount = None):
         # print("percentage for goal_id {} is {}".format(goal[0], goal[2]))
     # print("total percentage: {}".format(total_precentage))
     if total_precentage != 100 and total_precentage != 0:
-        raise InvalidPercentages("the percentages for all active goals sum up to {}, instead of 100".format(total_precentage))
+        raise errors.InvalidPercentages("the percentages for all active goals sum up to {}, instead of 100".format(total_precentage))
 
     default_percentage = 0
     if total_precentage == 0:
@@ -570,14 +570,14 @@ def print_data(data, headers_to_print = None):
             header[1] = max(header[1], len(str(row.get(header[0], ''))))
 
     print_format = (u'{{:>{}}}' * len(headers)).format(*[h[1]+2 for h in headers])
-    print print_format.format(*[h[0] for h in headers])
-    print print_format.format(*['-'*len(h[0]) for h in headers])
+    print(print_format.format(*[h[0] for h in headers]))
+    print(print_format.format(*['-'*len(h[0]) for h in headers]))
     for row in data:
-        print print_format.format(*[row.get(h[0], '') for h in headers])
+        print(print_format.format(*[row.get(h[0], '') for h in headers]))
 
 def test_save_amount():
     slabs = [25000, (5000, 0.05), (5000, 0.08), (99999999, 0.15)]
-    print 'testing save amounts'
+    print('testing save amounts')
     data = get_summary(get_all=True)
     data = data[-10:]
     for row in data:
