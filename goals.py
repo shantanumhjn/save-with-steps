@@ -75,7 +75,7 @@ def print_goal_logs(goal_names):
     # formats the data
     goal_summary = get_goal_summary(data)
     if not goal_names:
-        mytabprint.print_data(goal_summary.viewvalues(), ['goal', 'credits', 'debits', 'diff'])
+        mytabprint.print_data(goal_summary.values(), ['goal', 'credits', 'debits', 'diff'])
         print
 
     to_print = []
@@ -96,7 +96,7 @@ def print_goal_logs(goal_names):
 
     if goal_names:
         print
-        mytabprint.print_data(goal_summary.viewvalues(), ['goal', 'credits', 'debits', 'diff'])
+        mytabprint.print_data(goal_summary.values(), ['goal', 'credits', 'debits', 'diff'])
 
 def get_goal_summary(data):
     goal_wise_data = {}
