@@ -411,7 +411,7 @@ def save_data(data):
     conn.commit()
     conn.close()
 
-def get_save_amount(steps, slabs = None):
+def get_save_amount_old1(steps, slabs = None):
     # if slabs is None: slabs = [(5000, 0.01), (99999999, 0.25)]
     # if slabs is None: slabs = [20000, (5000, 0.05), (99999999, 0.15)]
     if slabs is None:
@@ -433,6 +433,12 @@ def get_save_amount(steps, slabs = None):
         esteps -= min(esteps, slab_high)
 
     return save_amount
+
+def get_save_amount(steps, min_save_avount = None, multiplication_factor = None):
+    if min_save_avount is None: min_save_avount = 2_500
+    if multiplication_factor is None: multiplication_factor = 0.15
+
+    return min_save_avount + (steps * multiplication_factor)
 
 def update_save_amomunt():
     sql = '''
@@ -582,11 +588,15 @@ def test_save_amount():
     data = data[-10:]
     for row in data:
         new_save = 0
+        total_steps = 0
         details = get_details(week_id=row['week_id'])
         for det_row in details:
-            new_save += get_save_amount(det_row['steps'], slabs)
+            steps = det_row['steps']
+            new_save += get_save_amount(steps)
+            total_steps += steps
         row['new_save'] = round_up_save_amount(new_save)
-    print_data(data, headers_to_print=['week_id', 'save_amount', 'new_save'])
+        row['steps'] = total_steps
+    print_data(data, headers_to_print=['week_id', 'steps', 'save_amount', 'new_save'])
 
 if __name__ == "__main__":
     test_save_amount()
