@@ -13,7 +13,7 @@ def print_goals(goal_names):
         for i, goal in enumerate(goals):
             tokens = goal['goal_name'].lower().split()
             for token in tokens:
-                if not goal_names_dict.has_key(token):
+                if not token in goal_names_dict.keys():
                     goal_names_dict[token] = []
                 goal_names_dict[token].append(i)
 
