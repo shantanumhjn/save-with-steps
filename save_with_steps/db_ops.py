@@ -436,7 +436,7 @@ def get_save_amount_old1(steps, slabs = None):
 
 def get_save_amount(steps, min_save_avount = None, multiplication_factor = None):
     if min_save_avount is None: min_save_avount = 2_500
-    if multiplication_factor is None: multiplication_factor = 0.15
+    if multiplication_factor is None: multiplication_factor = 0.2
 
     return min_save_avount + (steps * multiplication_factor)
 
@@ -599,6 +599,7 @@ def test_save_amount():
     print_data(data, headers_to_print=['week_id', 'steps', 'save_amount', 'new_save'])
 
 if __name__ == "__main__":
+    # python -m save_with_steps.db_ops
     test_save_amount()
     # create_schema()
     # print get_last_activity_date()
