@@ -2,7 +2,7 @@ cachetools==3.1.1
 certifi==2024.7.4
 chardet==3.0.4
 charset-normalizer==2.1.1
-idna==3.4
+idna==3.7
 numpy==1.24.1
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
