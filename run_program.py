@@ -56,11 +56,12 @@ def show_goals(wait = False):
     print("Showing Goals")
     data = db_ops.get_goals()
     output_format = "{:25}{:>20}  {:<6} {:>12}"
-    print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Percentage"])
+    print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Save Amount"])
     for r in data:
         goal_name = "{} ({})".format(r["goal_name"], r["goal_id"])
         amount = (lambda x, y: "{:,}".format(y) if x <= 0 else "{:,}".format(y)+"/"+"{:,}".format(x))(r["goal_amount"], r["amount_saved"])
-        print(output_format.format(goal_name, amount, r["active"], r["percentage"]))
+        
+        print(output_format.format(goal_name, amount, r["active"], "{:,}".format(r["save_amount"])))
     return wait
 
 def add_goal():
@@ -141,10 +142,11 @@ def remove_funds():
     (goal_name, goal_id) = take_goal_input("Enter goal name (or id) to remove funds from:")
     amount = int(take_input("Enter amount:"))
     comment = take_input("Comment:")
+    tags = take_input("tags:")
     out_str = "{:,} removed from {}".format(amount, goal_name)
     if goal_id:
         out_str = "{:,} removed from ({})".format(amount, goal_id)
-    db_ops.add_funds_to_goal(-amount, goal_name, goal_id, comment=comment)
+    db_ops.add_funds_to_goal(-amount, goal_name, goal_id, comment=comment, tags=tags)
     print(out_str)
     return True
 
@@ -152,10 +154,11 @@ def add_funds():
     (goal_name, goal_id) = take_goal_input("Enter goal name (or id) to add funds to:")
     amount = int(take_input("Enter amount:"))
     comment = take_input("Comment:")
+    tags = take_input("tags:")
     out_str = "{:,} added to {}".format(amount, goal_name)
     if goal_id:
         out_str = "{:,} added to ({})".format(amount, goal_id)
-    db_ops.add_funds_to_goal(amount, goal_name, goal_id, comment=comment)
+    db_ops.add_funds_to_goal(amount, goal_name, goal_id, comment=comment, tags=tags)
     print(out_str)
     return True
 

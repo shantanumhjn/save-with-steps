@@ -60,6 +60,16 @@ def create_schema():
     except Exception as error:
         print("Error while adding percentage column to goals: {}".format(error))
 
+    
+        sql = '''
+        alter table goals add column save_amount number default 0
+    '''
+    try:
+        cur.execute(sql)
+    except Exception as error:
+        print("Error while adding save_amount column to goals: {}".format(error))
+
+
     # goal_logs table
     sql = """
         create table if not exists goal_logs (
@@ -78,19 +88,28 @@ def create_schema():
     sql = 'create index if not exists goal_logs_idx1 on goal_logs (goal_name, operation)'
     cur.execute(sql)
 
+    sql = 'alter table goal_logs add column tags text'
+    try:
+        cur.execute(sql)
+    except Exception as error:
+        print("Error while adding tags column to goal_logs: {}".format(error))
+
+    sql = 'create index if not exists goal_logs_idx2 on goal_logs (tags)'
+    cur.execute(sql)
+
 
     conn.close()
 
-def log_goal_change(goal_name, operation, old_saved = 0, old_target = 0, new_saved = 0, new_target = 0, comment = None):
+def log_goal_change(goal_name, operation, old_saved = 0, old_target = 0, new_saved = 0, new_target = 0, comment = None, tags = None):
     conn = sqlite3.connect(db_file)
     sql = '''
         insert into goal_logs (
-            goal_name, operation, old_saved, old_target, new_saved, new_target, comment
+            goal_name, operation, old_saved, old_target, new_saved, new_target, comment, tags
         ) values (
-            ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?
         )
     '''
-    conn.execute(sql, (goal_name, operation, old_saved, old_target, new_saved, new_target, comment))
+    conn.execute(sql, (goal_name, operation, old_saved, old_target, new_saved, new_target, comment, tags))
     conn.commit()
     conn.close()
 
@@ -170,7 +189,7 @@ def get_goals():
                 goal_amount,
                 total_saved,
                 is_active,
-                percentage
+                save_amount
         from    goals
         order   by goal_id
     '''
@@ -188,7 +207,7 @@ def get_goals():
             "goal_amount": int(r[2]),
             "amount_saved": int(r[3]),
             "active": (lambda x: "yes" if x == 1 else "no")(int(r[4])),
-            "percentage": float(r[5])
+            "save_amount": float(r[5])
         }
         data.append(row)
     return data
@@ -238,7 +257,7 @@ def update_goal_target(amount, goal_name = None, goal_id = None):
         new_target = amount
     )
 
-def add_funds_to_goal(amount, goal_name = None, goal_id = None, from_save = False, comment = None):
+def add_funds_to_goal(amount, goal_name = None, goal_id = None, from_save = False, comment = None, tags = None):
     goal = get_goal_info(goal_name, goal_id)
 
     # if invalid input, return
@@ -270,7 +289,8 @@ def add_funds_to_goal(amount, goal_name = None, goal_id = None, from_save = Fals
         old_target = target,
         new_saved = new_saved,
         new_target = target,
-        comment = comment
+        comment = comment,
+        tags = tags
     )
 
 def make_a_save(week_id = None, amount = None):
@@ -289,17 +309,25 @@ def make_a_save(week_id = None, amount = None):
         save_amount = amount or 0
 
     # get goals
-    cur.execute('select goal_id, total_saved, percentage, goal_name from goals where is_active = 1')
+    cur.execute('select goal_id, total_saved, percentage, goal_name, save_amount from goals where is_active = 1')
     goals = cur.fetchall()
     num_goals = len(goals)
     conn.close()
 
+    usePercentages = True
+
     # check the percentages
     total_precentage = 0
     for goal in goals:
+        if usePercentages and goal[4]:
+            usePercentages = False
+            total_precentage = 0
+            break
+
         total_precentage += goal[2]
         # print("percentage for goal_id {} is {}".format(goal[0], goal[2]))
     # print("total percentage: {}".format(total_precentage))
+
     if total_precentage != 100 and total_precentage != 0:
         raise errors.InvalidPercentages("the percentages for all active goals sum up to {}, instead of 100".format(total_precentage))
 
@@ -312,12 +340,17 @@ def make_a_save(week_id = None, amount = None):
     if num_goals > 0:
         total_saved = 0
         for goal in goals:
-            this_save = save_amount * ((default_percentage or goal[2]) / 100.0)
+            if usePercentages:
+                this_save = save_amount * ((default_percentage or goal[2]) / 100.0)
+            else:
+                this_save = goal[4]
             this_save = int(this_save)
             if this_save:
                 total_saved += this_save
                 saved_for_each_goal.append((goal[0], goal[3], this_save))
-        saved_for_each_goal[0] = (saved_for_each_goal[0][0], saved_for_each_goal[0][1], saved_for_each_goal[0][2] + (save_amount - total_saved))
+        
+        if usePercentages:
+            saved_for_each_goal[0] = (saved_for_each_goal[0][0], saved_for_each_goal[0][1], saved_for_each_goal[0][2] + (save_amount - total_saved))
 
     for each_goal in saved_for_each_goal:
         add_funds_to_goal(
