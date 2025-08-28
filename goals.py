@@ -79,7 +79,7 @@ def print_goal_logs(goal_names):
         print
 
     to_print = []
-    for i, row in enumerate(data[-15:]):
+    for i, row in enumerate(data[-25:]):
         to_print.append({
             'date': row['date'],
             'goal_name': row['goal_name'],
