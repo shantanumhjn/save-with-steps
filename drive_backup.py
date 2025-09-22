@@ -86,7 +86,7 @@ def upload_file():
     media = MediaIoBaseUpload(fh, 'application/octet-stream', )
     request = service.files().update(fileId=file_id, media_body=media)
     response = request.execute()
-    print "Uploaded"
+    print("Uploaded")
 
 if __name__ == "__main__":
     parser = OptionParser()
@@ -104,11 +104,11 @@ if __name__ == "__main__":
         parser.error("-u and -d are exclusive")
 
     if not options.upload and not options.download:
-        print "Listing files:"
+        print("Listing files:")
         get_file_id(print_files = True)
     elif options.download:
-        print "Downloading file"
+        print("Downloading file")
         download_file()
     elif options.upload:
-        print "Uploading file"
+        print("Uploading file")
         upload_file()
