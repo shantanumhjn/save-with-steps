@@ -61,8 +61,16 @@ def create_schema():
         print("Error while adding percentage column to goals: {}".format(error))
 
     
-        sql = '''
+    sql = '''
         alter table goals add column save_amount number default 0
+    '''
+    try:
+        cur.execute(sql)
+    except Exception as error:
+        print("Error while adding save_amount column to goals: {}".format(error))
+    
+    sql = '''
+        alter table goals add column location text default ''
     '''
     try:
         cur.execute(sql)
