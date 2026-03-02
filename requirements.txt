@@ -24,4 +24,4 @@ requests==2.32.4
 rsa==4.7
 six==1.17.0
 uritemplate==3.0.1
-urllib3==2.5.0
+urllib3==2.6.3
