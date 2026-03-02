@@ -5,16 +5,16 @@ Creates a Drive v3 API service and prints the names and ids of the last 10 files
 the user has access to.
 """
 
-from apiclient.discovery import build
+from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-from apiclient.http import MediaIoBaseDownload
-from apiclient.http import MediaIoBaseUpload
+from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseUpload
 import io
 from optparse import OptionParser
 
-client_secret_file = "google_client_secret.json"
-credentials_file = "google_creds.json"
+client_secret_file = "client_secret.json"
+credentials_file = "credentials.json"
 
 file_to_upload = "fitbit_data.db"
 file_to_download = "fitbit_data_temp.db"
@@ -22,7 +22,7 @@ file_to_download = "fitbit_data_temp.db"
 def get_service():
     # Setup the Drive v3 API
     SCOPES = 'https://www.googleapis.com/auth/drive'
-    store = file.Storage('credentials.json')
+    store = file.Storage(credentials_file)
     creds = store.get()
     if not creds or creds.invalid:
         flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
