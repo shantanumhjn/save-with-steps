@@ -197,7 +197,8 @@ def get_goals():
                 goal_amount,
                 total_saved,
                 is_active,
-                save_amount
+                save_amount,
+                location
         from    goals
         order   by goal_id
     '''
@@ -215,7 +216,8 @@ def get_goals():
             "goal_amount": int(r[2]),
             "amount_saved": int(r[3]),
             "active": (lambda x: "yes" if x == 1 else "no")(int(r[4])),
-            "save_amount": float(r[5])
+            "save_amount": float(r[5]),
+            "location": str(r[6])
         }
         data.append(row)
     return data

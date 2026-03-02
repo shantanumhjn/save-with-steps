@@ -55,13 +55,13 @@ def show_goals(wait = False):
     print()
     print("Showing Goals")
     data = db_ops.get_goals()
-    output_format = "{:25}{:>20}  {:<6} {:>12}"
-    print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Save Amount"])
+    output_format = "{:25}{:>20}  {:<6} {:>12} {:>12}"
+    print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Save Amount", "Location"])
     for r in data:
         goal_name = "{} ({})".format(r["goal_name"], r["goal_id"])
         amount = (lambda x, y: "{:,}".format(y) if x <= 0 else "{:,}".format(y)+"/"+"{:,}".format(x))(r["goal_amount"], r["amount_saved"])
         
-        print(output_format.format(goal_name, amount, r["active"], "{:,}".format(r["save_amount"])))
+        print(output_format.format(goal_name, amount, r["active"], "{:,}".format(r["save_amount"]), r["location"]))
     return wait
 
 def add_goal():
