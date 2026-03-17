@@ -55,7 +55,7 @@ def show_goals(wait = False):
     print()
     print("Showing Goals")
     data = db_ops.get_goals()
-    output_format = "{:25}{:>20}  {:<6} {:>12} {:>12}"
+    output_format = "{:25}{:>20}  {:<6} {:>12} {:>25}"
     print_header(output_format, ["Goal Name", "Amount Saved", "Active", "Save Amount", "Location"])
     for r in data:
         goal_name = "{} ({})".format(r["goal_name"], r["goal_id"])
@@ -82,7 +82,7 @@ def make_a_save():
         saved_for_each_goal = db_ops.make_a_save(week_id)
         total_saved = 0
         for goal in saved_for_each_goal:
-            print("{:,} saved in goal {}.".format(goal[2], goal[1]))
+            print("{:,} saved in goal {}, to be added to {}".format(goal[2], goal[1], goal[3]))
             total_saved += goal[2]
         print("Total saved: {}".format(total_saved))
     except errors.InvalidPercentages as errMsg:

@@ -319,7 +319,7 @@ def make_a_save(week_id = None, amount = None):
         save_amount = amount or 0
 
     # get goals
-    cur.execute('select goal_id, total_saved, percentage, goal_name, save_amount from goals where is_active = 1')
+    cur.execute('select goal_id, total_saved, percentage, goal_name, save_amount, location from goals where is_active = 1')
     goals = cur.fetchall()
     num_goals = len(goals)
     conn.close()
@@ -357,10 +357,10 @@ def make_a_save(week_id = None, amount = None):
             this_save = int(this_save)
             if this_save:
                 total_saved += this_save
-                saved_for_each_goal.append((goal[0], goal[3], this_save))
+                saved_for_each_goal.append((goal[0], goal[3], this_save, goal[5]))
         
         if usePercentages:
-            saved_for_each_goal[0] = (saved_for_each_goal[0][0], saved_for_each_goal[0][1], saved_for_each_goal[0][2] + (save_amount - total_saved))
+            saved_for_each_goal[0] = (saved_for_each_goal[0][0], saved_for_each_goal[0][1], saved_for_each_goal[0][2] + (save_amount - total_saved), saved_for_each_goal[0][3])
 
     for each_goal in saved_for_each_goal:
         add_funds_to_goal(
