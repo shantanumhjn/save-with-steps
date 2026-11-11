@@ -7,6 +7,7 @@ import json
 import os
 import datetime
 from . import db_ops
+from . import fitbit_noop
 
 '''
 The Flow:
@@ -210,7 +211,10 @@ def fetch_n_save_new_data():
         return
 
     # print start_date, end_date
-    data = fetch_data(start_date_str, end_date_str)
+    # stubbing out the actual call to fitbit api for now, as it is not used currently
+    # The legacy Fitbit Web API and OAuth 2.0 endpoints were decommissioned on October 30, 2026. Please migrate your integration to the Google Health APIs: https://developers.google.com/health. Need additional help? Visit our Help Center for step-by-step guidance: https://support.google.com/googlehealth/answer/14236613?hl=en&sjid=152288853596598381-EU
+    # data = fetch_data(start_date_str, end_date_str)
+    data = fitbit_noop.fetch_data(start_date, end_date)
     db_ops.save_data(data)
 
 if __name__ == "__main__":
